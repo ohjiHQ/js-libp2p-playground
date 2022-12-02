@@ -31,6 +31,8 @@
     "@chainsafe/libp2p-noise": "^10.2.0",
     "@libp2p/mplex": "^7.1.0",
     "@libp2p/tcp": "^6.0.4",
+    "@libp2p/webrtc-direct": "^4.0.2",
+    "@libp2p/websockets": "^5.0.0",
     "libp2p": "^0.40.0",
     "multiaddr": "^10.0.1"
   }

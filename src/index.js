@@ -1,6 +1,9 @@
 import process from 'node:process'
 import { createLibp2p } from 'libp2p'
-import { tcp } from '@libp2p/tcp'
+
+// import { tcp } from '@libp2p/tcp'
+import { webSockets } from '@libp2p/websockets'
+
 import { noise } from '@chainsafe/libp2p-noise'
 import { mplex } from '@libp2p/mplex'
 import { multiaddr } from 'multiaddr'
@@ -8,9 +11,10 @@ import { multiaddr } from 'multiaddr'
 const node = await createLibp2p({
     addresses: {
         // add a listen address (localhost) to accept TCP connections on a random port
-        listen: ['/ip4/0.0.0.0/tcp/0']
+        listen: ['/ip4/0.0.0.0/tcp/0/ws']
     },
-    transports: [tcp()],
+    // transports: [tcp()],
+    transports: [webSockets()],
     connectionEncryption: [noise()],
     streamMuxers: [mplex()]
 })
@@ -38,7 +42,7 @@ if (process.argv.length >= 3) {
 const stop = async () => {
     // stop libp2p
     await node.stop()
-    console.log('libp2p has stopped')
+    console.log('\nlibp2p has stopped')
     process.exit(0)
 }
 
