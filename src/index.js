@@ -3,10 +3,20 @@ import { createLibp2p } from 'libp2p'
 
 // import { tcp } from '@libp2p/tcp'
 import { webSockets } from '@libp2p/websockets'
+import { all } from '@libp2p/websockets/filters'
 
 import { noise } from '@chainsafe/libp2p-noise'
 import { mplex } from '@libp2p/mplex'
 import { multiaddr } from 'multiaddr'
+
+import { bootstrap } from '@libp2p/bootstrap'
+// Known peers addresses
+const bootstrapMultiaddrs = [
+    '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
+    '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN'
+]
+
+import { kadDHT } from '@libp2p/kad-dht'
 
 const node = await createLibp2p({
     addresses: {
@@ -14,14 +24,38 @@ const node = await createLibp2p({
         listen: ['/ip4/0.0.0.0/tcp/0/ws']
     },
     // transports: [tcp()],
-    transports: [webSockets()],
+    transports: [webSockets({
+        filters: all
+    })],
     connectionEncryption: [noise()],
-    streamMuxers: [mplex()]
+    streamMuxers: [mplex()],
+    peerDiscovery: [
+        bootstrap({
+            list: bootstrapMultiaddrs,
+        })
+    ],
+    connectionManager: {
+        autoDial: true,
+    },
+    dht: kadDHT()
 })
 
 // start libp2p
 await node.start()
 console.log('libp2p has started')
+
+// Peer discovery and connection messages from the services
+node.addEventListener('peer:discovery', (evt) => {
+    console.log('Discovered %s', evt.detail.id.toString()) // Log discovered peer
+})
+
+node.connectionManager.addEventListener('peer:connect', (evt) => {
+    console.log('Connected to %s', evt.detail.remotePeer.toString()) // Log connected peer
+})
+
+for await (const event of node.dht.findPeer(node.peerId)) {
+    // console.log(event)
+}
 
 // print out listening addresses
 console.log('listening on addresses:')
