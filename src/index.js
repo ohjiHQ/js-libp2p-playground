@@ -83,6 +83,12 @@ room.on('subscribed', () => {
 
 console.log("List of peers in the room: ", room.getPeers())
 
+await room.broadcast("Hello!")
+room.on('message', (message) => {
+    console.log("Received a message: ", message)
+})
+
+
 // print out listening addresses
 console.log('listening on addresses:')
 node.getMultiaddrs().forEach((addr) => {
@@ -98,6 +104,15 @@ if (process.argv.length >= 3) {
 } else {
     console.log('no remote peer address given, skipping ping')
 }
+
+// var counter = 0
+// while (true) {
+//     if (counter == 101) {
+//         break
+//     }
+//     var message = "Hey" + counter
+//     room.broadcast(message)
+// }
 
 const stop = async () => {
     // stop libp2p
