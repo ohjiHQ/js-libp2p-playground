@@ -18,29 +18,38 @@ const bootstrapMultiaddrs = [
 
 import { kadDHT } from '@libp2p/kad-dht'
 
-const node = await createLibp2p({
-    addresses: {
-        // add a listen address (localhost) to accept TCP connections on a random port
-        listen: ['/ip4/0.0.0.0/tcp/0/ws']
-    },
-    // transports: [tcp()],
-    transports: [webSockets({
-        filters: all
-    })],
-    connectionEncryption: [noise()],
-    streamMuxers: [mplex()],
-    peerDiscovery: [
-        bootstrap({
-            list: bootstrapMultiaddrs,
-        })
-    ],
-    connectionManager: {
-        autoDial: true,
-    },
-    dht: kadDHT()
-})
+import { floodsub } from '@libp2p/floodsub'
+
+const createNode = async () => {
+    const node = await createLibp2p({
+        addresses: {
+            // add a listen address (localhost) to accept TCP connections on a random port
+            listen: ['/ip4/0.0.0.0/tcp/0/ws']
+        },
+        // transports: [tcp()],
+        transports: [webSockets({
+            filters: all
+        })],
+        connectionEncryption: [noise()],
+        streamMuxers: [mplex()],
+        peerDiscovery: [
+            bootstrap({
+                list: bootstrapMultiaddrs,
+            })
+        ],
+        connectionManager: {
+            autoDial: true,
+        },
+        dht: kadDHT(),
+        pubsub: floodsub()
+    })
+    return node
+}
 
 // start libp2p
+const [node] = await Promise.all([
+    createNode()
+])
 await node.start()
 console.log('libp2p has started')
 
@@ -56,6 +65,23 @@ node.connectionManager.addEventListener('peer:connect', (evt) => {
 for await (const event of node.dht.findPeer(node.peerId)) {
     // console.log(event)
 }
+
+import PubSubRoom from 'ipfs-pubsub-room'
+const room = new PubSubRoom(node, 'room-name')
+room.on('peer joined', (peer) => {
+    console.log('Peer joined the room', peer)
+})
+
+room.on('peer left', (peer) => {
+    console.log('Peer left...', peer)
+})
+
+// now started to listen to room
+room.on('subscribed', () => {
+    console.log('Now connected!')
+})
+
+console.log("List of peers in the room: ", room.getPeers())
 
 // print out listening addresses
 console.log('listening on addresses:')
