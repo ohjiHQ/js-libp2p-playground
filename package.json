@@ -28,17 +28,17 @@
     "test": ""
   },
   "dependencies": {
-    "@chainsafe/libp2p-gossipsub": "^5.2.1",
+    "@chainsafe/libp2p-gossipsub": "^2.0.0",
     "@chainsafe/libp2p-noise": "^10.2.0",
     "@libp2p/bootstrap": "^5.0.1",
-    "@libp2p/floodsub": "^5.0.0",
+    "@libp2p/floodsub": "^1.0.6",
     "@libp2p/kad-dht": "^6.0.1",
     "@libp2p/mplex": "^7.1.0",
     "@libp2p/tcp": "^6.0.4",
     "@libp2p/webrtc-direct": "^4.0.2",
-    "@libp2p/websockets": "^5.0.0",
+    "@libp2p/websockets": "^1.0.7",
     "ipfs-pubsub-room": "^3.0.0",
-    "libp2p": "^0.40.0",
+    "libp2p": "^0.37.3",
     "multiaddr": "^10.0.1"
   }
 }
