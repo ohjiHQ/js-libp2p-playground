@@ -19,6 +19,7 @@ const bootstrapMultiaddrs = [
 import { kadDHT } from '@libp2p/kad-dht'
 
 import { floodsub } from '@libp2p/floodsub'
+import { toString as uin8ArrayToString } from 'uint8arrays/to-string'
 
 const createNode = async () => {
     const node = await createLibp2p({
@@ -71,6 +72,10 @@ const room = new PubSubRoom(node, 'room-name')
 room.on('peer joined', (peer) => {
     console.log('Peer joined the room', peer)
 })
+room.on('subscribed', () => {
+    console.log("Subscribed!")
+})
+
 
 room.on('peer left', (peer) => {
     console.log('Peer left...', peer)
@@ -79,6 +84,12 @@ room.on('peer left', (peer) => {
 // now started to listen to room
 room.on('subscribed', () => {
     console.log('Now connected!')
+})
+
+room.broadcast('Hello!')
+console.log("Broadcasted a message!")
+room.on('message', (message) => {
+    console.log("Received a message: ", uin8ArrayToString(message.data))
 })
 
 console.log("List of peers in the room: ", room.getPeers())
