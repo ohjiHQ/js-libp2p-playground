@@ -20,6 +20,7 @@ import { kadDHT } from '@libp2p/kad-dht'
 
 import { floodsub } from '@libp2p/floodsub'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+import { gossipsub } from '@chainsafe/libp2p-gossipsub'
 
 const createNode = async () => {
     const node = await createLibp2p({
@@ -41,8 +42,11 @@ const createNode = async () => {
         connectionManager: {
             autoDial: true,
         },
-        dht: kadDHT(),
-        pubsub: floodsub()
+        dht: kadDHT()
+        // pubsub: floodsub()
+        // pubsub: new GossipSub({
+        //     emitSelf: true
+        // })
     })
     return node
 }
@@ -54,28 +58,17 @@ const [node] = await Promise.all([
 await node.start()
 console.log('libp2p has started')
 
-import PubSubRoom from 'ipfs-pubsub-room'
-const room = new PubSubRoom(node, 'room-name')
-room.on('peer joined', (peer) => {
-    console.log('Peer joined the room', peer)
+const options = {}
+const gsub = gossipsub(options)(node)
+await gsub.start()
+
+gsub.addEventListener('message', (message) => {
+    console.log(`${message.detail.topic}: `, new TextDecoder().decode(message.detail.data))
 })
 
-room.on('peer left', (peer) => {
-    console.log('Peer left...', peer)
-})
+gsub.subscribe('fruit')
 
-// now started to listen to room
-room.on('subscribed', () => {
-    console.log('Now connected!')
-})
-
-room.broadcast('Hello!')
-console.log("Broadcasted a message!")
-room.on('message', (message) => {
-    console.log("Received a message: ", uint8ArrayToString(message.data))
-})
-
-console.log("List of peers in the room: ", room.getPeers())
+gsub.publish('fruit', new TextEncoder().encode('banana'))
 
 // Peer discovery and connection messages from the services
 node.addEventListener('peer:discovery', (evt) => {
