@@ -21,6 +21,7 @@ import { kadDHT } from '@libp2p/kad-dht'
 import { floodsub } from '@libp2p/floodsub'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import { gossipsub } from '@chainsafe/libp2p-gossipsub'
+import { time } from 'node:console'
 
 const createNode = async () => {
     const node = await createLibp2p({
@@ -42,7 +43,7 @@ const createNode = async () => {
         connectionManager: {
             autoDial: true,
         },
-        dht: kadDHT()
+        dht: kadDHT(),
         // pubsub: floodsub()
         // pubsub: new GossipSub({
         //     emitSelf: true
@@ -58,7 +59,13 @@ const [node] = await Promise.all([
 await node.start()
 console.log('libp2p has started')
 
-const options = {}
+// print out listening addresses
+console.log('listening on addresses:')
+node.getMultiaddrs().forEach((addr) => {
+    console.log(addr.toString())
+})
+
+const options = { emitSelf: true }
 const gsub = gossipsub(options)(node)
 await gsub.start()
 
@@ -68,7 +75,12 @@ gsub.addEventListener('message', (message) => {
 
 gsub.subscribe('fruit')
 
+// const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+// await delay(10000) /// waiting 1 second.
+
 gsub.publish('fruit', new TextEncoder().encode('banana'))
+gsub.publish('fruit', new TextEncoder().encode('apple'))
+
 
 // Peer discovery and connection messages from the services
 node.addEventListener('peer:discovery', (evt) => {
@@ -82,12 +94,6 @@ node.connectionManager.addEventListener('peer:connect', (evt) => {
 for await (const event of node.dht.findPeer(node.peerId)) {
     // console.log(event)
 }
-
-// print out listening addresses
-console.log('listening on addresses:')
-node.getMultiaddrs().forEach((addr) => {
-    console.log(addr.toString())
-})
 
 // ping peer if received multiaddr
 if (process.argv.length >= 3) {
