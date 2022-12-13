@@ -48,6 +48,9 @@ const createNode = async () => {
         // pubsub: new GossipSub({
         //     emitSelf: true
         // })
+        pubsub: gossipsub({
+            emitSelf: true
+        })
     })
     return node
 }
@@ -81,18 +84,18 @@ for await (const event of node.dht.findPeer(node.peerId)) {
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 await delay(1000) /// waiting 1 second.
 
-const options = { emitSelf: true }
-const gsub = gossipsub(options)(node)
-await gsub.start()
+// const options = {}
+// const gsub = gossipsub(options)(node)
+await node.pubsub.start()
 
-gsub.addEventListener('message', (message) => {
+node.pubsub.subscribe("fruit")
+
+node.pubsub.addEventListener("message", (message) => {
     console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data))
 })
 
-gsub.subscribe('fruit')
-
-gsub.publish('fruit', new TextEncoder().encode('banana'))
-gsub.publish('fruit', new TextEncoder().encode('apple'))
+node.pubsub.publish("fruit", new TextEncoder().encode("banana"))
+node.pubsub.publish("fruit", new TextEncoder().encode("apple"))
 
 // ping peer if received multiaddr
 if (process.argv.length >= 3) {
