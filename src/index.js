@@ -65,23 +65,6 @@ node.getMultiaddrs().forEach((addr) => {
     console.log(addr.toString())
 })
 
-const options = { emitSelf: true }
-const gsub = gossipsub(options)(node)
-await gsub.start()
-
-gsub.addEventListener('message', (message) => {
-    console.log(`${message.detail.topic}: `, new TextDecoder().decode(message.detail.data))
-})
-
-gsub.subscribe('fruit')
-
-// const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
-// await delay(10000) /// waiting 1 second.
-
-gsub.publish('fruit', new TextEncoder().encode('banana'))
-gsub.publish('fruit', new TextEncoder().encode('apple'))
-
-
 // Peer discovery and connection messages from the services
 node.addEventListener('peer:discovery', (evt) => {
     console.log('Discovered %s', evt.detail.id.toString()) // Log discovered peer
@@ -94,6 +77,22 @@ node.connectionManager.addEventListener('peer:connect', (evt) => {
 for await (const event of node.dht.findPeer(node.peerId)) {
     // console.log(event)
 }
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+await delay(1000) /// waiting 1 second.
+
+const options = { emitSelf: true }
+const gsub = gossipsub(options)(node)
+await gsub.start()
+
+gsub.addEventListener('message', (message) => {
+    console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data))
+})
+
+gsub.subscribe('fruit')
+
+gsub.publish('fruit', new TextEncoder().encode('banana'))
+gsub.publish('fruit', new TextEncoder().encode('apple'))
 
 // ping peer if received multiaddr
 if (process.argv.length >= 3) {
