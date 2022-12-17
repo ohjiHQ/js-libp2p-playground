@@ -1,35 +1,38 @@
+// Use for arguements
 import process from 'node:process'
+
+// Create libp2p
 import { createLibp2p } from 'libp2p'
 
-// import { tcp } from '@libp2p/tcp'
+// Use ws for transports
 import { webSockets } from '@libp2p/websockets'
 import { all } from '@libp2p/websockets/filters'
 
+// Use Chainsafe's noise for crypto
 import { noise } from '@chainsafe/libp2p-noise'
+
+// Other libp2p utilities
 import { mplex } from '@libp2p/mplex'
 import { multiaddr } from 'multiaddr'
 
+// Known peers addresses as bootstrap nodes
 import { bootstrap } from '@libp2p/bootstrap'
-// Known peers addresses
 const bootstrapMultiaddrs = [
     '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
     '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN'
 ]
 
+// Configure DHTs
 import { kadDHT } from '@libp2p/kad-dht'
 
-import { floodsub } from '@libp2p/floodsub'
-import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+// Use Chainsafe's gossipsub implementation
 import { gossipsub } from '@chainsafe/libp2p-gossipsub'
-import { time } from 'node:console'
 
 const createNode = async () => {
     const node = await createLibp2p({
         addresses: {
-            // add a listen address (localhost) to accept TCP connections on a random port
             listen: ['/ip4/0.0.0.0/tcp/0/ws']
         },
-        // transports: [tcp()],
         transports: [webSockets({
             filters: all
         })],
@@ -44,10 +47,6 @@ const createNode = async () => {
             autoDial: true,
         },
         dht: kadDHT(),
-        // pubsub: floodsub()
-        // pubsub: new GossipSub({
-        //     emitSelf: true
-        // })
         pubsub: gossipsub({
             emitSelf: true
         })
@@ -70,30 +69,30 @@ node.getMultiaddrs().forEach((addr) => {
 
 // Peer discovery and connection messages from the services
 node.addEventListener('peer:discovery', (evt) => {
-    console.log('Discovered %s', evt.detail.id.toString()) // Log discovered peer
+    console.log('Discovered %s', evt.detail.id.toString())
 })
 
+// Log peer connections
 node.connectionManager.addEventListener('peer:connect', (evt) => {
-    console.log('Connected to %s', evt.detail.remotePeer.toString()) // Log connected peer
+    console.log('Connected to %s', evt.detail.remotePeer.toString())
 })
 
-for await (const event of node.dht.findPeer(node.peerId)) {
-    // console.log(event)
-}
-
+// Time gap from node setup to sending messages: 10s
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
-await delay(1000) /// waiting 1 second.
+await delay(10000)
 
-// const options = {}
-// const gsub = gossipsub(options)(node)
+// Start pubsub service
 await node.pubsub.start()
 
+// Subscribe to the "fruit" topic
 node.pubsub.subscribe("fruit")
 
+// Event listener for incoming messages
 node.pubsub.addEventListener("message", (message) => {
     console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data))
 })
 
+// Fire messages
 node.pubsub.publish("fruit", new TextEncoder().encode("banana"))
 node.pubsub.publish("fruit", new TextEncoder().encode("apple"))
 
@@ -107,8 +106,8 @@ if (process.argv.length >= 3) {
     console.log('no remote peer address given, skipping ping')
 }
 
+// stop libp2p
 const stop = async () => {
-    // stop libp2p
     await node.stop()
     console.log('\nlibp2p has stopped')
     process.exit(0)
